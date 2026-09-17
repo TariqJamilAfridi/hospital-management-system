@@ -15,7 +15,7 @@ function Appointments() {
         const fetchAppointments = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/api/appointments"
+                    "https://careplus-hospital-backend.onrender.com/api/appointments"
                 );
 
                 if (!response.ok) {

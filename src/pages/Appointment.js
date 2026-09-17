@@ -31,7 +31,7 @@ function Appointment() {
 
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/appointments?date=${formData.date}`
+                    `https://careplus-hospital-backend.onrender.com/api/appointments?date=${formData.date}`
                 );
 
                 const data = await response.json();
@@ -77,7 +77,7 @@ function Appointment() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/appointments",
+                "https://careplus-hospital-backend.onrender.com/api/appointments",
                 {
                     method: "POST",
                     headers: {
@@ -113,7 +113,7 @@ function Appointment() {
                 error.message ||
                 "Unable to book appointment. Please try again."
             );
-        }finally {
+        } finally {
             setLoading(false);
         }
     };

@@ -23,7 +23,7 @@ function Payment() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/safepay/create-session",
+        "https://careplus-hospital-backend.onrender.com/api/safepay/create-session",
         {
           method: "POST",
           headers: {
