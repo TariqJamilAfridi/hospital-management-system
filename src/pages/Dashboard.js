@@ -1,33 +1,40 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
+import { getAppointments } from "../services/api";
+import { formatCurrency } from "../utils/helpers";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Dashboard() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        const fetchAppointments = async () => {
-            try {
-                const response = await fetch(
-                    "http://localhost:5000/api/appointments"
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch appointments");
-                }
-
-                const data = await response.json();
-
-                setAppointments(data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchAppointments();
     }, []);
+
+    const fetchAppointments = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const data = await getAppointments();
+            
+            console.log("📊 Dashboard - API Response:", data);
+            
+            // Handle both response formats
+            const appointmentList = data.appointments || data;
+            
+            console.log("📊 Dashboard - Appointments Count:", appointmentList.length);
+            console.log("📊 Dashboard - Appointments List:", appointmentList);
+            
+            setAppointments(appointmentList);
+        } catch (error) {
+            console.error("❌ Dashboard - Error fetching appointments:", error);
+            setError(error.message || "Failed to load appointments");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const totalAppointments = appointments.length;
 
@@ -90,7 +97,7 @@ function Dashboard() {
         },
         {
             title: "Total Revenue",
-            value: `PKR ${totalRevenue.toLocaleString()}`,
+            value: formatCurrency(totalRevenue),
             icon: "💰",
         },
     ];
@@ -107,9 +114,17 @@ function Dashboard() {
 
             <section className="dashboard-section">
                 {loading ? (
-                    <p className="dashboard-message">
-                        Loading dashboard...
-                    </p>
+                    <LoadingSpinner message="Loading dashboard..." />
+                ) : error ? (
+                    <div className="dashboard-error">
+                        <p>{error}</p>
+                        <button 
+                            onClick={fetchAppointments}
+                            className="primary-btn"
+                        >
+                            Try Again
+                        </button>
+                    </div>
                 ) : (
                     <>
                         <div className="dashboard-stats">
@@ -132,21 +147,24 @@ function Dashboard() {
 
                         <div className="recent-appointments">
                             <div className="recent-appointments-header">
-                                <h2>Recent Appointments</h2>
+                                <h2>All Appointments ({appointments.length})</h2>
 
                                 <button
                                     type="button"
                                     className="dashboard-refresh-btn"
-                                    onClick={() => window.location.reload()}
+                                    onClick={fetchAppointments}
                                 >
                                     ↻ Refresh Data
                                 </button>
                             </div>
 
                             {appointments.length === 0 ? (
-                                <p className="dashboard-message">
-                                    No appointments available.
-                                </p>
+                                <div className="dashboard-message">
+                                    <p>No appointments available.</p>
+                                    <Link to="/appointment" className="primary-btn">
+                                        Book First Appointment
+                                    </Link>
+                                </div>
                             ) : (
                                 <div className="recent-appointments-table">
                                     <table>
@@ -162,70 +180,63 @@ function Dashboard() {
                                         </thead>
 
                                         <tbody>
-                                            {appointments
-                                                .slice(0, 5)
-                                                .map((appointment) => (
-                                                    <tr key={appointment._id}>
-                                                        <td>
-                                                            {appointment.fullName}
-                                                        </td>
+                                            {appointments.map((appointment) => (
+                                                <tr key={appointment._id}>
+                                                    <td>
+                                                        {appointment.fullName}
+                                                    </td>
 
-                                                        <td>
-                                                            {appointment.doctor}
-                                                        </td>
+                                                    <td>
+                                                        {appointment.doctor}
+                                                    </td>
 
-                                                        <td>
-                                                            {appointment.date}
-                                                        </td>
+                                                    <td>
+                                                        {appointment.date}
+                                                    </td>
 
-                                                        <td>
-                                                            {appointment.time}
-                                                        </td>
+                                                    <td>
+                                                        {appointment.time}
+                                                    </td>
 
-                                                        <td>
-                                                            <span
-                                                                className={
-                                                                    appointment.paymentStatus ===
-                                                                        "Paid"
-                                                                        ? "status-paid"
-                                                                        : "status-pending"
-                                                                }
-                                                            >
-                                                                {appointment.paymentStatus}
-                                                            </span>
-                                                        </td>
+                                                    <td>
+                                                        <span
+                                                            className={
+                                                                appointment.paymentStatus ===
+                                                                    "Paid"
+                                                                    ? "status-paid"
+                                                                    : "status-pending"
+                                                            }
+                                                        >
+                                                            {appointment.paymentStatus}
+                                                        </span>
+                                                    </td>
 
-                                                        <td>
-                                                            <span
-                                                                className={
-                                                                    appointment.appointmentStatus ===
-                                                                        "Completed"
-                                                                        ? "status-paid"
-                                                                        : appointment.appointmentStatus ===
-                                                                            "Cancelled"
-                                                                            ? "status-pending"
-                                                                            : "status-booked"
-                                                                }
-                                                            >
-                                                                {
-                                                                    appointment.appointmentStatus
-                                                                }
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                    <td>
+                                                        <span
+                                                            className={
+                                                                appointment.appointmentStatus ===
+                                                                    "Completed"
+                                                                    ? "status-paid"
+                                                                    : appointment.appointmentStatus ===
+                                                                        "Cancelled"
+                                                                        ? "status-pending"
+                                                                        : "status-booked"
+                                                            }
+                                                        >
+                                                            {
+                                                                appointment.appointmentStatus
+                                                            }
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
                             )}
 
                             <div className="recent-appointments-footer">
-                                <Link
-                                    to="/appointments"
-                                    className="view-all-btn"
-                                >
-                                    View All Appointments
-                                </Link>
+                                <p>Total: {appointments.length} appointments</p>
                             </div>
                         </div>
                     </>

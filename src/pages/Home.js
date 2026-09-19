@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
+import { APP_TAGLINE, SERVICES, DOCTORS, CONTACT_INFO } from "../config/constants";
+import { scrollToElement } from "../utils/helpers";
+
 function Home() {
     useEffect(() => {
         const sectionId = window.location.hash;
@@ -17,35 +20,15 @@ function Home() {
             }
         }
     }, []);
-    const services = [
-        {
-            title: "General Medicine",
-            description:
-                "Complete medical care for common illnesses and health conditions.",
-        },
-        {
-            title: "Gynecology",
-            description:
-                "Professional healthcare services for women's health and wellness.",
-        },
-        {
-            title: "Laboratory Services",
-            description:
-                "Reliable laboratory testing to support accurate diagnosis.",
-        },
-        {
-            title: "Emergency Care",
-            description:
-                "Quick and professional medical care for emergency situations.",
-        },
-    ];
+
+    const mainDoctor = DOCTORS[0];
 
     return (
         <main>
             {/* Hero Section */}
             <section className="hero">
                 <div className="hero-content">
-                    <h1>Quality Healthcare You Can Trust</h1>
+                    <h1>{APP_TAGLINE}</h1>
 
                     <p>
                         We provide trusted healthcare services with experienced doctors
@@ -60,16 +43,7 @@ function Home() {
                         <button
                             type="button"
                             className="secondary-btn"
-                            onClick={() => {
-                                const section = document.getElementById("doctors");
-
-                                if (section) {
-                                    section.scrollIntoView({
-                                        behavior: "smooth",
-                                        block: "start",
-                                    });
-                                }
-                            }}
+                            onClick={() => scrollToElement("doctors")}
                         >
                             Meet Our Doctors
                         </button>
@@ -96,8 +70,8 @@ function Home() {
                 </div>
 
                 <div className="services-container">
-                    {services.map((service, index) => (
-                        <div className="service-card" key={index}>
+                    {SERVICES.map((service) => (
+                        <div className="service-card" key={service.id}>
                             <div className="service-icon">
                                 ✚
                             </div>
@@ -124,33 +98,33 @@ function Home() {
                 <div className="doctor-card">
                     <div className="doctor-image">
                         <img
-                            src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80"
-                            alt="Dr. Nasreen Kasor"
+                            src={mainDoctor.image}
+                            alt={mainDoctor.name}
                         />
                     </div>
 
                     <div className="doctor-info">
-                        <h3>Dr. Nasreen Kasor</h3>
+                        <h3>{mainDoctor.name}</h3>
 
                         <p className="doctor-specialty">
-                            Gynecology Specialist
+                            {mainDoctor.specialty}
                         </p>
 
                         <p className="doctor-availability">
-                            <strong>Available:</strong> Every Monday
+                            <strong>Available:</strong> {mainDoctor.availableDays}
                         </p>
 
                         <div className="doctor-buttons">
-                            <Link to="/doctors/nasreen-kasor" className="secondary-btn">
+                            <Link to={`/doctors/${mainDoctor.id}`} className="secondary-btn">
                                 View Profile
                             </Link>
 
-                            <a
-                                href="/appointment"
+                            <Link
+                                to="/appointment"
                                 className="primary-btn"
                             >
                                 Book Appointment
-                            </a>
+                            </Link>
                         </div>
                         <div className="doctors-section-action">
                             <Link
@@ -208,21 +182,21 @@ function Home() {
                         <div className="contact-item">
                             <h3>Hospital Address</h3>
                             <p>
-                                123 Healthcare Avenue, Karachi
+                                {CONTACT_INFO.address}
                             </p>
                         </div>
 
                         <div className="contact-item">
                             <h3>Phone</h3>
                             <p>
-                                +92 300 1234567
+                                {CONTACT_INFO.phone}
                             </p>
                         </div>
 
                         <div className="contact-item">
                             <h3>Email</h3>
                             <p>
-                                info@careplushospital.com
+                                {CONTACT_INFO.email}
                             </p>
                         </div>
 

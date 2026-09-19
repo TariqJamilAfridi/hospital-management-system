@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
+import { createAppointment, getAppointments } from "../services/api";
+import { APPOINTMENT_CONFIG, DOCTORS } from "../config/constants";
+import { getMinAppointmentDate } from "../utils/helpers";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Appointment() {
     const navigate = useNavigate();
+    const doctor = DOCTORS[0]; // Main doctor
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -22,6 +27,7 @@ function Appointment() {
             [event.target.id]: event.target.value,
         });
     };
+
     useEffect(() => {
         const fetchBookedTimes = async () => {
             if (!formData.date) {
@@ -30,19 +36,9 @@ function Appointment() {
             }
 
             try {
-                const response = await fetch(
-                    `https://careplus-hospital-backend.onrender.com/api/appointments?date=${formData.date}`
-                );
+                const data = await getAppointments({ date: formData.date });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.message || "Failed to fetch booked times"
-                    );
-                }
-
-                const booked = data
+                const booked = (data.appointments || data)
                     .filter(
                         (appointment) =>
                             appointment.appointmentStatus !== "Cancelled"
@@ -51,6 +47,7 @@ function Appointment() {
 
                 setBookedTimes(booked);
 
+                // Clear time if it's now booked
                 if (booked.includes(formData.time)) {
                     setFormData((previous) => ({
                         ...previous,
@@ -58,15 +55,17 @@ function Appointment() {
                     }));
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Error fetching booked times:", error);
             }
         };
 
         fetchBookedTimes();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.date]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        
         if (!formData.date || !formData.time) {
             setError("Please select an appointment date and time.");
             return;
@@ -76,39 +75,21 @@ function Appointment() {
         setError("");
 
         try {
-            const response = await fetch(
-                "https://careplus-hospital-backend.onrender.com/api/appointments",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(formData),
-                }
-            );
+            const result = await createAppointment(formData);
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.message || "Failed to book appointment"
-                );
-            }
-
-            console.log("Appointment saved:", data);
+            console.log("Appointment saved:", result);
 
             navigate("/payment", {
                 state: {
                     ...formData,
-                    doctor: data.appointment.doctor,
-                    specialty: data.appointment.specialty,
-                    fee: data.appointment.fee,
-                    appointmentId: data.appointment._id,
+                    doctor: result.appointment.doctor,
+                    specialty: result.appointment.specialty,
+                    fee: result.appointment.fee,
+                    appointmentId: result.appointment._id,
                 },
             });
         } catch (error) {
-            console.error(error);
-
+            console.error("Error booking appointment:", error);
             setError(
                 error.message ||
                 "Unable to book appointment. Please try again."
@@ -126,10 +107,12 @@ function Appointment() {
                 <h1>Book an Appointment</h1>
 
                 <p>
-                    Schedule an appointment with Dr. Nasreen Kasor.
+                    Schedule an appointment with {doctor.name}.
                 </p>
             </section>
 
+            {/* Loading Spinner */}
+            {loading && <LoadingSpinner message="Booking your appointment..." />}
 
             {/* Appointment Content */}
             <section className="appointment-section">
@@ -139,31 +122,43 @@ function Appointment() {
 
                     <div className="appointment-doctor-image">
                         <img
-                            src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80"
-                            alt="Dr. Nasreen Kasor"
+                            src={doctor.image}
+                            alt={doctor.name}
                         />
                     </div>
 
                     <div className="appointment-doctor-info">
 
-                        <h2>Dr. Nasreen Kasor</h2>
+                        <h2>{doctor.name}</h2>
 
                         <p className="appointment-specialty">
-                            Gynecology Specialist
+                            {doctor.specialty}
                         </p>
 
                         <p>
-                            <strong>Available:</strong> Every Monday
+                            <strong>Available:</strong> {doctor.availableDays}
                         </p>
 
                         <p>
-                            <strong>Appointment Fee:</strong> PKR 2,000
+                            <strong>Time:</strong> {doctor.availableTime}
+                        </p>
+
+                        <p>
+                            <strong>Appointment Fee:</strong> PKR {doctor.fee.toLocaleString()}
                         </p>
 
                     </div>
                     <div className="appointment-availability-note">
-                        <strong>Doctor Availability:</strong>
-                        Dr. Nasreen Kasor is available every Monday from 9:00 AM to 2:00 PM.
+                        <strong>⏰ Booking Information:</strong>
+                        <p>{doctor.name} is available {doctor.availability}.</p>
+                        {formData.date && (
+                            <p className="booking-status">
+                                {bookedTimes.length > 0 
+                                    ? `⚠️ ${bookedTimes.length} slot(s) already booked for this date`
+                                    : `✅ All time slots available for this date`
+                                }
+                            </p>
+                        )}
                     </div>
 
                 </div>
@@ -245,14 +240,15 @@ function Appointment() {
                                 <input
                                     type="date"
                                     id="date"
-                                    min={new Date().toISOString().split("T")[0]}
+                                    min={getMinAppointmentDate()}
                                     value={formData.date}
                                     onChange={(event) => {
                                         const selectedDate = new Date(event.target.value);
 
+                                        // Check if selected day is Monday (1)
                                         if (selectedDate.getDay() !== 1) {
                                             setError(
-                                                "Dr. Nasreen Kasor is available only on Mondays."
+                                                `${doctor.name} is available only on Mondays.`
                                             );
                                             setFormData({
                                                 ...formData,
@@ -264,6 +260,7 @@ function Appointment() {
                                         setError("");
                                         handleChange(event);
                                     }}
+                                    required
                                 />
 
 
@@ -281,48 +278,37 @@ function Appointment() {
                                     value={formData.time}
                                     onChange={handleChange}
                                     required
+                                    disabled={!formData.date}
                                 >
                                     <option value="">
-                                        Select Available Time
+                                        {!formData.date 
+                                            ? "Select a date first" 
+                                            : "Select Available Time"
+                                        }
                                     </option>
 
-
-
-                                    <option
-                                        value="09:00 AM"
-                                        disabled={bookedTimes.includes("09:00 AM")}
-                                    >
-                                        09:00 AM {bookedTimes.includes("09:00 AM") ? "(Booked)" : ""}
-                                    </option>
-
-                                    <option
-                                        value="10:00 AM"
-                                        disabled={bookedTimes.includes("10:00 AM")}
-                                    >
-                                        10:00 AM {bookedTimes.includes("10:00 AM") ? "(Booked)" : ""}
-                                    </option>
-
-                                    <option
-                                        value="11:00 AM"
-                                        disabled={bookedTimes.includes("11:00 AM")}
-                                    >
-                                        11:00 AM {bookedTimes.includes("11:00 AM") ? "(Booked)" : ""}
-                                    </option>
-
-                                    <option
-                                        value="12:00 PM"
-                                        disabled={bookedTimes.includes("12:00 PM")}
-                                    >
-                                        12:00 PM {bookedTimes.includes("12:00 PM") ? "(Booked)" : ""}
-                                    </option>
-
-                                    <option
-                                        value="01:00 PM"
-                                        disabled={bookedTimes.includes("01:00 PM")}
-                                    >
-                                        01:00 PM {bookedTimes.includes("01:00 PM") ? "(Booked)" : ""}
-                                    </option>
+                                    {APPOINTMENT_CONFIG.availableTimeSlots.map((timeSlot) => {
+                                        const isBooked = bookedTimes.includes(timeSlot);
+                                        return (
+                                            <option
+                                                key={timeSlot}
+                                                value={timeSlot}
+                                                disabled={isBooked}
+                                            >
+                                                {timeSlot} {isBooked ? "❌ Booked" : "✅ Available"}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
+
+                                {formData.date && (
+                                    <small className="time-slot-hint">
+                                        {bookedTimes.length === APPOINTMENT_CONFIG.availableTimeSlots.length 
+                                            ? "⚠️ All slots are booked for this date. Please select another date."
+                                            : `✅ ${APPOINTMENT_CONFIG.availableTimeSlots.length - bookedTimes.length} slot(s) available`
+                                        }
+                                    </small>
+                                )}
 
                             </div>
                         </div>
@@ -336,7 +322,7 @@ function Appointment() {
                             </span>
 
                             <strong>
-                                PKR 2,000
+                                PKR {doctor.fee.toLocaleString()}
                             </strong>
 
                         </div>

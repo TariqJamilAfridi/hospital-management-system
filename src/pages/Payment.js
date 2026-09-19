@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { createSafepayCheckout } from "../services/api";
+import { formatCurrency } from "../utils/helpers";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Payment() {
   const location = useLocation();
@@ -10,54 +13,56 @@ function Payment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    // Log appointment data for debugging
+    console.log("💳 Payment - Appointment Data:", appointment);
+    
+    if (!appointment?.appointmentId) {
+      console.error("❌ Payment - Missing appointmentId");
+    }
+  }, [appointment]);
+
   const handlePayment = async () => {
     if (!appointment?.appointmentId) {
       setError(
         "Appointment information is missing. Please book an appointment again."
       );
+      console.error("❌ Payment - No appointmentId found in state");
       return;
     }
+
+    console.log("💳 Payment - Starting payment process");
+    console.log("💳 Payment - Appointment ID:", appointment.appointmentId);
+    console.log("💳 Payment - Amount:", appointment.fee || 2000);
 
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(
-        "https://careplus-hospital-backend.onrender.com/api/safepay/create-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            appointmentId: appointment.appointmentId,
-            amount: appointment.fee || 2000,
-          }),
-        }
-      );
+      const data = await createSafepayCheckout({
+        appointmentId: appointment.appointmentId,
+        amount: appointment.fee || 2000,
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to create Safepay checkout."
-        );
-      }
+      console.log("✅ Payment - Safepay response:", data);
 
       if (!data.checkoutUrl) {
         throw new Error("Safepay checkout URL was not returned.");
       }
 
-      // Save appointment information temporarily.
+      // Save appointment information temporarily
       sessionStorage.setItem(
         "careplusAppointment",
         JSON.stringify(appointment)
       );
 
-      // Redirect customer to Safepay hosted checkout.
+      console.log("✅ Payment - Redirecting to:", data.checkoutUrl);
+
+      // Redirect customer to Safepay hosted checkout
       window.location.href = data.checkoutUrl;
     } catch (error) {
-      console.error("Safepay payment error:", error);
+      console.error("❌ Payment - Safepay payment error:", error);
+      console.error("❌ Payment - Error message:", error.message);
 
       setError(
         error.message ||
@@ -71,128 +76,187 @@ function Payment() {
   if (!appointment) {
     return (
       <main className="payment-page">
-        <div className="payment-container">
-          <div className="payment-card">
-            <h1>Payment Information</h1>
+        <section className="payment-header">
+          <h1>Payment Information</h1>
+          <p>Complete your appointment payment securely</p>
+        </section>
 
+        <section className="payment-section">
+          <div className="payment-error-container">
+            <div className="payment-error-icon">⚠️</div>
+            <h2>Appointment Information Missing</h2>
             <p className="payment-error">
-              Appointment information is missing.
+              We couldn't find your appointment details. 
+              Please book an appointment first.
             </p>
 
-            <button
-              type="button"
-              className="payment-back-btn"
-              onClick={() => navigate("/appointment")}
-            >
-              Back to Appointment
-            </button>
+            <div className="payment-actions">
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => navigate("/appointment")}
+              >
+                Book Appointment
+              </button>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => navigate("/")}
+              >
+                Go to Home
+              </button>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     );
   }
 
   return (
     <main className="payment-page">
-      <div className="payment-container">
-        <div className="payment-card">
+      {/* Page Header */}
+      <section className="payment-header">
+        <h1>Complete Your Payment</h1>
+        <p>Securely pay your appointment fee through Safepay</p>
+      </section>
 
-          <h1>Complete Your Payment</h1>
+      {/* Loading Overlay */}
+      {loading && (
+        <LoadingSpinner 
+          fullScreen={true}
+          message="Connecting to Safepay secure payment gateway..." 
+        />
+      )}
 
-          <p className="payment-subtitle">
-            Securely pay your appointment fee through Safepay.
-          </p>
+      {/* Payment Content */}
+      <section className="payment-section">
+        <div className="payment-summary">
+          <h2>Appointment Summary</h2>
 
-          {/* Appointment Summary */}
-          <div className="payment-appointment-summary">
-            <h3>Appointment Summary</h3>
-
-            <p>
-              <strong>Doctor:</strong>{" "}
-              {appointment.doctor || "Dr. Nasreen Kasor"}
-            </p>
-
-            <p>
-              <strong>Specialty:</strong>{" "}
-              {appointment.specialty || "Gynecology Specialist"}
-            </p>
-
-            <p>
-              <strong>Patient:</strong>{" "}
-              {appointment.fullName}
-            </p>
-
-            <p>
-              <strong>Email:</strong>{" "}
-              {appointment.email}
-            </p>
-
-            <p>
-              <strong>Date:</strong>{" "}
-              {appointment.date}
-            </p>
-
-            <p>
-              <strong>Time:</strong>{" "}
-              {appointment.time}
-            </p>
-
-            <p>
-              <strong>Appointment Fee:</strong>{" "}
-              PKR{" "}
-              {(appointment.fee || 2000).toLocaleString()}
-            </p>
+          <div className="summary-doctor">
+            <img
+              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=150&q=80"
+              alt={appointment.doctor || "Dr. Nasreen Kasor"}
+            />
+            <div>
+              <h3>{appointment.doctor || "Dr. Nasreen Kasor"}</h3>
+              <p>{appointment.specialty || "Gynecology Specialist"}</p>
+            </div>
           </div>
 
-          {/* Payment Information */}
-          <div className="safepay-payment-box">
-            <h3>Secure Payment</h3>
+          <div className="summary-details">
+            <div className="summary-item">
+              <span>Patient Name</span>
+              <strong>{appointment.fullName}</strong>
+            </div>
+
+            <div className="summary-item">
+              <span>Email</span>
+              <strong>{appointment.email}</strong>
+            </div>
+
+            <div className="summary-item">
+              <span>Phone</span>
+              <strong>{appointment.phone}</strong>
+            </div>
+
+            <div className="summary-item">
+              <span>Appointment Date</span>
+              <strong>{appointment.date}</strong>
+            </div>
+
+            <div className="summary-item">
+              <span>Appointment Time</span>
+              <strong>{appointment.time}</strong>
+            </div>
+          </div>
+
+          <div className="total-payment">
+            <span>Total Amount</span>
+            <strong>{formatCurrency(appointment.fee || 2000)}</strong>
+          </div>
+        </div>
+
+        <div className="payment-form-container">
+          <h2>Secure Payment</h2>
+
+          <div className="safepay-info">
+            <div className="safepay-logo">
+              <span className="payment-icon">🔒</span>
+              <h3>Pay with Safepay</h3>
+            </div>
 
             <p>
-              You will be redirected to Safepay's secure
-              hosted checkout page to complete your payment.
+              You will be redirected to Safepay's secure hosted checkout page 
+              to complete your payment.
             </p>
 
             <div className="safepay-features">
-              <div>✓ Secure hosted checkout</div>
-              <div>✓ Card payment supported</div>
-              <div>✓ Your card details are handled by Safepay</div>
+              <div className="feature-item">
+                <span>✓</span>
+                <p>Secure 256-bit encryption</p>
+              </div>
+              <div className="feature-item">
+                <span>✓</span>
+                <p>Card payment supported</p>
+              </div>
+              <div className="feature-item">
+                <span>✓</span>
+                <p>Your details are safe with Safepay</p>
+              </div>
             </div>
           </div>
 
           {/* Demo Notice */}
           <div className="demo-payment-note">
-            <strong>Sandbox Payment:</strong>{" "}
-            This project is currently using Safepay Sandbox/Test Mode.
-            No real payment will be charged.
+            <strong>⚙️ Sandbox Mode:</strong>{" "}
+            This project uses Safepay Test Mode. No real charges will be made.
           </div>
 
           {/* Error */}
           {error && (
-            <div className="payment-error">
-              {error}
+            <div className="payment-error-box">
+              <span className="error-icon">⚠️</span>
+              <div>
+                <strong>Payment Error</strong>
+                <p>{error}</p>
+              </div>
             </div>
+          )}
+
+          {/* Debug Info (Development Only) */}
+          {process.env.NODE_ENV === 'development' && (
+            <details className="debug-info">
+              <summary>Debug Information</summary>
+              <pre>{JSON.stringify({
+                hasAppointmentId: !!appointment?.appointmentId,
+                appointmentId: appointment?.appointmentId,
+                amount: appointment?.fee || 2000,
+              }, null, 2)}</pre>
+            </details>
           )}
 
           {/* Pay Button */}
           <button
             type="button"
-            className="pay-button"
+            className="payment-btn"
             onClick={handlePayment}
             disabled={loading}
           >
             {loading
-              ? "Connecting to Safepay..."
-              : `Pay PKR ${(appointment.fee || 2000).toLocaleString()}`}
+              ? "⏳ Connecting to Safepay..."
+              : `💳 Pay ${formatCurrency(appointment.fee || 2000)}`}
           </button>
 
-          <p className="payment-security-note">
-            You will enter your card details only on Safepay's
-            secure payment page.
-          </p>
-
+          <div className="secure-payment">
+            <span>🔒</span>
+            <p>
+              Your payment information is encrypted and secure. 
+              Card details are never stored on our servers.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

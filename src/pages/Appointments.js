@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
+import { getAppointments, updateAppointmentStatus as updateStatus } from "../services/api";
+import { formatCurrency } from "../utils/helpers";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Appointments() {
     const [appointments, setAppointments] = useState([]);
@@ -12,32 +15,25 @@ function Appointments() {
     const [selectedAppointment, setSelectedAppointment] = useState(null);
 
     useEffect(() => {
-        const fetchAppointments = async () => {
-            try {
-                const response = await fetch(
-                    "https://careplus-hospital-backend.onrender.com/api/appointments"
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch appointments");
-                }
-
-                const data = await response.json();
-
-                setAppointments(data);
-            } catch (error) {
-                console.error(error);
-
-                setError(
-                    "Unable to load appointments."
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchAppointments();
     }, []);
+
+    const fetchAppointments = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const data = await getAppointments();
+            
+            // Handle both response formats
+            const appointmentList = data.appointments || data;
+            setAppointments(appointmentList);
+        } catch (error) {
+            console.error("Error fetching appointments:", error);
+            setError(error.message || "Unable to load appointments.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filteredAppointments = appointments.filter(
         (appointment) => {
@@ -69,32 +65,14 @@ function Appointments() {
             );
         }
     );
-    const updateAppointmentStatus = async (
+    const updateAppointmentStatusHandler = async (
         appointmentId,
         newStatus
     ) => {
         try {
-            const response = await fetch(
-                `http://localhost:5000/api/appointments/${appointmentId}/status`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        appointmentStatus: newStatus,
-                    }),
-                }
-            );
+            const result = await updateStatus(appointmentId, newStatus);
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.message || "Failed to update status"
-                );
-            }
-
+            // Update local state
             setAppointments((currentAppointments) =>
                 currentAppointments.map((appointment) =>
                     appointment._id === appointmentId
@@ -105,9 +83,12 @@ function Appointments() {
                         : appointment
                 )
             );
+
+            // Show success message (you can add toast notification here)
+            console.log("Appointment status updated:", result);
         } catch (error) {
-            console.error(error);
-            alert("Unable to update appointment status.");
+            console.error("Error updating status:", error);
+            alert(error.message || "Unable to update appointment status.");
         }
     };
 
@@ -212,17 +193,18 @@ function Appointments() {
 
                 {/* Loading */}
                 {loading && (
-                    <p className="appointments-message">
-                        Loading appointments...
-                    </p>
+                    <LoadingSpinner message="Loading appointments..." />
                 )}
 
 
                 {/* Error */}
-                {error && (
-                    <p className="appointments-error">
-                        {error}
-                    </p>
+                {error && !loading && (
+                    <div className="appointments-error">
+                        <p>{error}</p>
+                        <button onClick={fetchAppointments} className="primary-btn">
+                            Try Again
+                        </button>
+                    </div>
                 )}
 
 
@@ -295,8 +277,7 @@ function Appointments() {
                                                 </td>
 
                                                 <td>
-                                                    PKR{" "}
-                                                    {appointment.fee?.toLocaleString()}
+                                                    {formatCurrency(appointment.fee)}
                                                 </td>
 
                                                 <td>
@@ -342,11 +323,12 @@ function Appointments() {
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                updateAppointmentStatus(
+                                                                updateAppointmentStatusHandler(
                                                                     appointment._id,
                                                                     "Completed"
                                                                 )
                                                             }
+                                                            disabled={appointment.appointmentStatus === "Completed"}
                                                         >
                                                             Complete
                                                         </button>
@@ -354,11 +336,12 @@ function Appointments() {
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                updateAppointmentStatus(
+                                                                updateAppointmentStatusHandler(
                                                                     appointment._id,
                                                                     "Cancelled"
                                                                 )
                                                             }
+                                                            disabled={appointment.appointmentStatus === "Cancelled"}
                                                         >
                                                             Cancel
                                                         </button>
@@ -459,8 +442,7 @@ function Appointments() {
                             <div className="modal-detail">
                                 <span>Appointment Fee</span>
                                 <strong>
-                                    PKR{" "}
-                                    {selectedAppointment.fee?.toLocaleString()}
+                                    {formatCurrency(selectedAppointment.fee)}
                                 </strong>
                             </div>
 

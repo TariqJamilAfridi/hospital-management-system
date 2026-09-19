@@ -1,12 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const closeMenu = () => {
     setMenuOpen(false);
+    setShowUserMenu(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    closeMenu();
+    navigate("/");
   };
 
   const scrollToSection = (sectionId) => {
@@ -104,19 +114,26 @@ function Navbar() {
             Contact
           </button>
 
-          <Link
-            to="/dashboard"
-            onClick={closeMenu}
-          >
-            Dashboard
-          </Link>
+          {/* Show Dashboard link only for admin */}
+          {isAuthenticated() && isAdmin() && (
+            <Link
+              to="/admin/dashboard"
+              onClick={closeMenu}
+              className="nav-link-admin"
+            >
+              Admin Dashboard
+            </Link>
+          )}
 
-          <Link
-            to="/appointments"
-            onClick={closeMenu}
-          >
-            Appointments
-          </Link>
+          {/* Show Appointments link only for logged-in users */}
+          {isAuthenticated() && !isAdmin() && (
+            <Link
+              to="/appointments"
+              onClick={closeMenu}
+            >
+              My Appointments
+            </Link>
+          )}
 
           <Link
             to="/doctors"
@@ -125,13 +142,103 @@ function Navbar() {
             All Doctors
           </Link>
 
-          <Link
-            to="/appointment"
-            className="appointment-btn"
-            onClick={closeMenu}
-          >
-            Book Appointment
-          </Link>
+          {/* Show Book Appointment button only for logged-in users */}
+          {isAuthenticated() ? (
+            <Link
+              to="/appointment"
+              className="appointment-btn"
+              onClick={closeMenu}
+            >
+              Book Appointment
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="appointment-btn"
+              onClick={closeMenu}
+            >
+              Book Appointment
+            </Link>
+          )}
+
+          {/* Auth buttons */}
+          {isAuthenticated() ? (
+            <div className="user-menu-wrapper">
+              <button
+                type="button"
+                className="user-menu-btn"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <span className="user-avatar">
+                  {user?.fullName?.charAt(0) || "U"}
+                </span>
+                <span className="user-name">{user?.fullName}</span>
+                <span className="dropdown-arrow">▼</span>
+              </button>
+
+              {showUserMenu && (
+                <div className="user-dropdown">
+                  <div className="user-info">
+                    <p className="user-email">{user?.email}</p>
+                    <span className="user-role">
+                      {user?.role === "admin" ? "👑 Admin" : "👤 User"}
+                    </span>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <Link
+                    to="/profile"
+                    onClick={closeMenu}
+                    className="dropdown-item"
+                  >
+                    👤 My Profile
+                  </Link>
+                  {!isAdmin() && (
+                    <Link
+                      to="/appointments"
+                      onClick={closeMenu}
+                      className="dropdown-item"
+                    >
+                      📅 My Appointments
+                    </Link>
+                  )}
+                  {isAdmin() && (
+                    <Link
+                      to="/admin/dashboard"
+                      onClick={closeMenu}
+                      className="dropdown-item"
+                    >
+                      📊 Admin Dashboard
+                    </Link>
+                  )}
+                  <div className="dropdown-divider"></div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="dropdown-item logout-btn"
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <Link
+                to="/login"
+                className="login-btn"
+                onClick={closeMenu}
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="signup-btn"
+                onClick={closeMenu}
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

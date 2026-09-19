@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const appointmentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
     fullName: {
       type: String,
       required: true,
@@ -24,6 +30,11 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: "Dr. Nasreen Kasor",
+    },
+
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
     },
 
     specialty: {
@@ -50,12 +61,19 @@ const appointmentSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
+      enum: ["Pending", "Paid", "Failed", "Refunded"],
       default: "Pending",
     },
 
     appointmentStatus: {
       type: String,
+      enum: ["Booked", "Confirmed", "Completed", "Cancelled", "No-Show"],
       default: "Booked",
+    },
+
+    notes: {
+      type: String,
+      trim: true,
     },
   },
   {

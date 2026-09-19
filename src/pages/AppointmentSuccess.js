@@ -1,56 +1,99 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { updatePaymentStatus } from "../services/api";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function AppointmentSuccess() {
   const location = useLocation();
+  // const [searchParams] = useSearchParams(); // Removed - not used
 
-  const [appointment, setAppointment] = useState(
-    location.state || null
-  );
-
+  const [appointment, setAppointment] = useState(location.state || null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState("");
 
   useEffect(() => {
-    // First check React Router state
-    if (location.state) {
-      setAppointment(location.state);
+    const initializeAppointment = async () => {
+      // First check React Router state
+      if (location.state) {
+        setAppointment(location.state);
+        
+        // If coming from payment, update status automatically
+        if (location.state.appointmentId) {
+          await updatePaymentStatusInDB(location.state.appointmentId);
+        }
+        
+        setLoading(false);
+        return;
+      }
+
+      // If redirected back from Safepay, recover from sessionStorage
+      const savedAppointment = sessionStorage.getItem("careplusAppointment");
+
+      if (savedAppointment) {
+        try {
+          const parsedAppointment = JSON.parse(savedAppointment);
+          setAppointment(parsedAppointment);
+          
+          // Update payment status automatically
+          if (parsedAppointment.appointmentId) {
+            await updatePaymentStatusInDB(parsedAppointment.appointmentId);
+          }
+        } catch (error) {
+          console.error("Failed to read saved appointment:", error);
+        }
+      }
+
       setLoading(false);
+    };
+
+    initializeAppointment();
+  }, [location.state]);
+
+  const updatePaymentStatusInDB = async (appointmentId) => {
+    try {
+      console.log("💳 Updating payment status for:", appointmentId);
+      
+      const result = await updatePaymentStatus(appointmentId, "Paid");
+      
+      console.log("✅ Payment status updated:", result);
+      
+      // Update local state to show "Paid"
+      setAppointment(prev => ({
+        ...prev,
+        paymentStatus: "Paid"
+      }));
+      
+    } catch (error) {
+      console.error("❌ Error updating payment status:", error);
+      // Don't show error to user, just log it
+    }
+  };
+
+  const handleManualUpdate = async () => {
+    if (!appointment?.appointmentId) {
+      setUpdateError("Appointment ID not found");
       return;
     }
 
-    // If redirected back from Safepay,
-    // recover appointment from sessionStorage
-    const savedAppointment =
-      sessionStorage.getItem("careplusAppointment");
+    setUpdating(true);
+    setUpdateError("");
 
-    if (savedAppointment) {
-      try {
-        const parsedAppointment =
-          JSON.parse(savedAppointment);
-
-        setAppointment(parsedAppointment);
-      } catch (error) {
-        console.error(
-          "Failed to read saved appointment:",
-          error
-        );
-      }
+    try {
+      await updatePaymentStatusInDB(appointment.appointmentId);
+      alert("Payment status updated successfully!");
+    } catch (error) {
+      setUpdateError(error.message || "Failed to update payment status");
+    } finally {
+      setUpdating(false);
     }
-
-    setLoading(false);
-  }, [location.state]);
+  };
 
   if (loading) {
     return (
       <main className="success-page">
         <div className="success-container">
-          <div className="success-card">
-            <h1>Loading Appointment...</h1>
-            <p>
-              Please wait while we load your appointment
-              information.
-            </p>
-          </div>
+          <LoadingSpinner message="Loading appointment information..." />
         </div>
       </main>
     );
@@ -189,15 +232,34 @@ function AppointmentSuccess() {
           </div>
 
           {appointment.paymentStatus === "Paid" ? (
-            <p className="success-confirmation">
-              Your payment has been successfully
-              confirmed.
-            </p>
+            <div className="success-confirmation">
+              <span className="check-icon">✓</span>
+              <p>Your payment has been successfully confirmed.</p>
+            </div>
           ) : (
-            <p className="success-pending-message">
-              Your appointment has been booked.
-              Payment is currently pending confirmation.
-            </p>
+            <div className="pending-payment-section">
+              <p className="success-pending-message">
+                ⏳ Your appointment has been booked. Payment is currently pending confirmation.
+              </p>
+              
+              {appointment.appointmentId && (
+                <div className="manual-update-section">
+                  <p className="manual-update-text">
+                    If you've completed the payment but status is still pending:
+                  </p>
+                  <button
+                    onClick={handleManualUpdate}
+                    disabled={updating}
+                    className="manual-update-btn"
+                  >
+                    {updating ? "Updating..." : "✓ Mark as Paid"}
+                  </button>
+                  {updateError && (
+                    <p className="update-error">{updateError}</p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           <p className="success-contact-message">
