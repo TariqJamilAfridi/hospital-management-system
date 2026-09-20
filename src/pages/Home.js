@@ -1,9 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { APP_TAGLINE, SERVICES, DOCTORS, CONTACT_INFO } from "../config/constants";
-import { scrollToElement } from "../utils/helpers";
+import { APP_TAGLINE, SERVICES, CONTACT_INFO } from "../config/constants";
+import { getDoctorAvatarData, scrollToElement } from "../utils/helpers";
+import { getDoctors } from "../services/api";
 
 function Home() {
+    const [doctors, setDoctors] = useState([]);
+    const [loadingDoctors, setLoadingDoctors] = useState(true);
+
     useEffect(() => {
         const sectionId = window.location.hash;
 
@@ -19,14 +23,31 @@ function Home() {
                 }, 100);
             }
         }
+
+        // Fetch doctors from database
+        const fetchDoctors = async () => {
+            try {
+                setLoadingDoctors(true);
+                const data = await getDoctors();
+                console.log("📋 Fetched doctors for home page:", data);
+                setDoctors(data.doctors || []);
+            } catch (error) {
+                console.error("❌ Error fetching doctors:", error);
+                setDoctors([]);
+            } finally {
+                setLoadingDoctors(false);
+            }
+        };
+
+        fetchDoctors();
     }, []);
 
-    const mainDoctor = DOCTORS[0];
+    const featuredDoctors = doctors.slice(0, 3);
 
     return (
         <main>
             {/* Hero Section */}
-            <section className="hero">
+            <section className="hero" id="home">
                 <div className="hero-content">
                     <h1>{APP_TAGLINE}</h1>
 
@@ -73,7 +94,7 @@ function Home() {
                     {SERVICES.map((service) => (
                         <div className="service-card" key={service.id}>
                             <div className="service-icon">
-                                ✚
+                                {service.title.substring(0, 2).toUpperCase()}
                             </div>
 
                             <h3>{service.title}</h3>
@@ -95,37 +116,69 @@ function Home() {
                     </p>
                 </div>
 
-                <div className="doctor-card">
-                    <div className="doctor-image">
-                        <img
-                            src={mainDoctor.image}
-                            alt={mainDoctor.name}
-                        />
+                {loadingDoctors && (
+                    <div className="loading-message">
+                        <p>Loading doctors...</p>
                     </div>
+                )}
 
-                    <div className="doctor-info">
-                        <h3>{mainDoctor.name}</h3>
+                {!loadingDoctors && doctors.length === 0 && (
+                    <div className="no-doctors-message">
+                        <p>No doctors available at the moment.</p>
+                    </div>
+                )}
 
-                        <p className="doctor-specialty">
-                            {mainDoctor.specialty}
-                        </p>
+                {!loadingDoctors && featuredDoctors.length > 0 && (
+                    <div className="featured-doctors-grid">
+                        {featuredDoctors.map((doctor) => {
+                            const avatar = getDoctorAvatarData(doctor);
 
-                        <p className="doctor-availability">
-                            <strong>Available:</strong> {mainDoctor.availableDays}
-                        </p>
+                            return (
+                                <div className="featured-doctor-card" key={doctor._id || doctor.name}>
+                                    <div className={`doctor-avatar doctor-avatar-${avatar.gender}`} aria-label={`${doctor.name} avatar`}>
+                                        <span>{avatar.initials}</span>
+                                    </div>
 
-                        <div className="doctor-buttons">
-                            <Link to={`/doctors/${mainDoctor.id}`} className="secondary-btn">
-                                View Profile
-                            </Link>
+                                    <div className="doctor-info">
+                                        <h3>{doctor.name}</h3>
 
-                            <Link
-                                to="/appointment"
-                                className="primary-btn"
-                            >
-                                Book Appointment
-                            </Link>
-                        </div>
+                                        <p className="doctor-specialty">
+                                            {doctor.specialty}
+                                        </p>
+
+                                        <p className="doctor-availability">
+                                            <strong>Available:</strong> {doctor.availableDays || 'Not specified'}
+                                        </p>
+
+                                        {doctor.experience && (
+                                            <p className="doctor-experience">
+                                                <strong>Experience:</strong> {doctor.experience} years
+                                            </p>
+                                        )}
+
+                                        {doctor.fee && (
+                                            <p className="doctor-fee">
+                                                <strong>Fee:</strong> PKR {doctor.fee.toLocaleString()}
+                                            </p>
+                                        )}
+
+                                        <div className="doctor-buttons">
+                                            <Link to={`/doctors/${doctor._id}`} className="secondary-btn">
+                                                View Profile
+                                            </Link>
+
+                                            <Link
+                                                to="/appointment"
+                                                className="primary-btn"
+                                            >
+                                                Book Appointment
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
                         <div className="doctors-section-action">
                             <Link
                                 to="/doctors"
@@ -135,7 +188,7 @@ function Home() {
                             </Link>
                         </div>
                     </div>
-                </div>
+                )}
             </section>
 
 

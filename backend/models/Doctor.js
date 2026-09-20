@@ -100,6 +100,36 @@ const doctorSchema = new mongoose.Schema(
 doctorSchema.index({ specialty: 1, isActive: 1 });
 doctorSchema.index({ name: 1 });
 
+// Virtual field to map consultationFee to fee for frontend compatibility
+doctorSchema.virtual('fee').get(function() {
+  return this.consultationFee;
+});
+
+// Virtual fields for frontend compatibility
+doctorSchema.virtual('image').get(function() {
+  return this.profileImage;
+});
+
+doctorSchema.virtual('availableDays').get(function() {
+  if (this.availability && this.availability.length > 0) {
+    return this.availability.join(', ');
+  }
+  return 'Not specified';
+});
+
+doctorSchema.virtual('availableTime').get(function() {
+  if (this.availableTimeSlots && this.availableTimeSlots.length > 0) {
+    const first = this.availableTimeSlots[0];
+    const last = this.availableTimeSlots[this.availableTimeSlots.length - 1];
+    return `${first} - ${last}`;
+  }
+  return 'Not specified';
+});
+
+// Ensure virtuals are included when converting to JSON
+doctorSchema.set('toJSON', { virtuals: true });
+doctorSchema.set('toObject', { virtuals: true });
+
 const Doctor = mongoose.model("Doctor", doctorSchema);
 
 module.exports = Doctor;

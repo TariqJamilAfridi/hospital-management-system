@@ -1,5 +1,6 @@
 const express = require("express");
 const Appointment = require("../models/Appointment");
+const Doctor = require("../models/Doctor");
 const { asyncHandler, AppError } = require("../middleware/errorHandler");
 const { 
   validateAppointmentData, 
@@ -23,9 +24,30 @@ router.post("/", protect, validateAppointmentData, asyncHandler(async (req, res)
     fee,
   } = req.body;
 
+  const doctorRecord = await Doctor.findOne({ _id: doctorId, isActive: true });
+
+  if (!doctorRecord) {
+    throw new AppError("Selected doctor was not found or is unavailable", 400);
+  }
+
+  const appointmentDate = new Date(`${date}T00:00:00`);
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const appointmentDay = dayNames[appointmentDate.getDay()];
+
+  if (!doctorRecord.availability.includes(appointmentDay)) {
+    throw new AppError(`${doctorRecord.name} is not available on ${appointmentDay}`, 400);
+  }
+
+  if (!doctorRecord.availableTimeSlots.includes(time)) {
+    throw new AppError("Please select a valid time for the selected doctor", 400);
+  }
+
   // Check for existing appointment at the same time
   const existingAppointment = await Appointment.findOne({
-    doctor: doctor || "Dr. Nasreen Kasor",
+    $or: [
+      { doctorId: doctorRecord._id },
+      { doctorId: { $exists: false }, doctor: doctorRecord.name },
+    ],
     date,
     time,
     appointmentStatus: {
@@ -46,12 +68,12 @@ router.post("/", protect, validateAppointmentData, asyncHandler(async (req, res)
     fullName: fullName.trim(),
     email: email.trim().toLowerCase(),
     phone: phone.trim(),
-    doctor: doctor || "Dr. Nasreen Kasor",
-    doctorId,
-    specialty: specialty || "Gynecology Specialist",
+    doctor: doctorRecord.name,
+    doctorId: doctorRecord._id,
+    specialty: doctorRecord.specialty,
     date,
     time,
-    fee: fee || 2000,
+    fee: doctorRecord.consultationFee,
   });
 
   const savedAppointment = await appointment.save();
@@ -110,15 +132,24 @@ router.get("/my-appointments", protect, asyncHandler(async (req, res) => {
 
 /* Get booked slots for a specific date and doctor */
 router.get("/booked-slots", asyncHandler(async (req, res) => {
-  const { date, doctor } = req.query;
+  const { date, doctorId } = req.query;
 
-  if (!date || !doctor) {
-    throw new AppError("Please provide date and doctor", 400);
+  if (!date || !doctorId) {
+    throw new AppError("Please provide date and doctorId", 400);
+  }
+
+  const doctorRecord = await Doctor.findById(doctorId).select("name");
+
+  if (!doctorRecord) {
+    throw new AppError("Doctor not found", 404);
   }
 
   const bookedAppointments = await Appointment.find({
+    $or: [
+      { doctorId },
+      { doctorId: { $exists: false }, doctor: doctorRecord.name },
+    ],
     date,
-    doctor,
     appointmentStatus: {
       $nin: ["Cancelled", "No-Show"],
     },

@@ -165,6 +165,47 @@ export const scrollToTop = () => {
 };
 
 /**
+ * Determines a gender-based fallback avatar for a doctor using initials and soft color styling.
+ * @param {Object} doctor - Doctor object
+ * @returns {{ initials: string, gender: string }}
+ */
+export const getDoctorAvatarData = (doctor = {}) => {
+  const name = (doctor.name || 'Doctor').trim();
+  const normalizedName = name.toLowerCase();
+  const genderValue = (doctor.gender || '').toLowerCase();
+
+  const femaleNameHints = [
+    'nasreen', 'sadia', 'fatima', 'maryam', 'aisha', 'maria', 'sana',
+    'hira', 'sara', 'zara', 'nida', 'farah', 'samra', 'anila', 'azra',
+    'kiran', 'fiza', 'hina', 'alina', 'laiba', 'saba', 'amna'
+  ];
+
+  const maleNameHints = [
+    'ali', 'ahmed', 'hamza', 'hassan', 'usman', 'saad', 'muhammad',
+    'omar', 'imran', 'danish', 'bilal', 'haris', 'zain', 'asad', 'waqas',
+    'shah', 'talha', 'kamran', 'nabeel', 'faizan', 'john', 'smith'
+  ];
+
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || 'DR';
+
+  let gender = 'neutral';
+
+  if (genderValue.includes('female') || femaleNameHints.some((hint) => normalizedName.includes(hint))) {
+    gender = 'female';
+  } else if (genderValue.includes('male') || maleNameHints.some((hint) => normalizedName.includes(hint))) {
+    gender = 'male';
+  }
+
+  return { initials, gender };
+};
+
+/**
  * Debounce function to limit how often a function is called
  * @param {Function} func - Function to debounce
  * @param {number} wait - Wait time in milliseconds

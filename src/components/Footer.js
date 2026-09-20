@@ -37,7 +37,7 @@ function Footer() {
         {/* Hospital Information */}
         <div className="footer-column">
 
-          <h3>✚ CarePlus Hospital</h3>
+          <h3>CarePlus Hospital</h3>
 
           <p>
             Quality healthcare you can trust.

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getAppointments, getDoctors, addDoctor, updateDoctor, deleteDoctor } from "../services/api";
+import { getAppointments, getDoctors, addDoctor, updateDoctor, deleteDoctor, updateAppointmentStatus } from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 function AdminDashboard() {
@@ -161,6 +161,21 @@ function AdminDashboard() {
       setError(err.message || "Failed to delete doctor");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAppointmentStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await updateAppointmentStatus(appointmentId, newStatus);
+      setAppointments((currentAppointments) =>
+        currentAppointments.map((appointment) =>
+          appointment._id === appointmentId
+            ? { ...appointment, appointmentStatus: newStatus }
+            : appointment
+        )
+      );
+    } catch (err) {
+      setError(err.message || "Failed to update appointment status");
     }
   };
 
@@ -338,6 +353,7 @@ function AdminDashboard() {
                     <th>Fee</th>
                     <th>Payment</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -361,6 +377,26 @@ function AdminDashboard() {
                           {apt.appointmentStatus}
                         </span>
                       </td>
+                        <td>
+                          <div className="admin-appointment-actions">
+                            <button
+                              type="button"
+                              className="admin-status-btn admin-status-complete"
+                              onClick={() => handleAppointmentStatusChange(apt._id, "Completed")}
+                              disabled={apt.appointmentStatus === "Completed" || apt.appointmentStatus === "Cancelled"}
+                            >
+                              Mark Complete
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-status-btn admin-status-cancel"
+                              onClick={() => handleAppointmentStatusChange(apt._id, "Cancelled")}
+                              disabled={apt.appointmentStatus === "Cancelled" || apt.appointmentStatus === "Completed"}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
                     </tr>
                   ))}
                 </tbody>
@@ -515,9 +551,9 @@ function AdminDashboard() {
 
             <div className="doctors-grid">
               {doctors.map((doctor) => (
-                <div key={doctor._id} className="doctor-card">
-                  <div className="doctor-header">
-                    <div className="doctor-avatar">
+                  <div key={doctor._id} className="doctor-card admin-doctor-card">
+                  <div className="doctor-header admin-doctor-header">
+                    <div className="doctor-avatar admin-doctor-avatar">
                       {doctor.profileImage ? (
                         <img src={doctor.profileImage} alt={doctor.name} />
                       ) : (
@@ -526,37 +562,37 @@ function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                    <div className="doctor-info">
+                    <div className="doctor-info admin-doctor-info">
                       <h3>{doctor.name}</h3>
                       <p className="specialty">{doctor.specialty}</p>
                       <p className="qualifications">{doctor.qualifications}</p>
                     </div>
                   </div>
 
-                  <div className="doctor-details">
-                    <div className="detail-row">
+                  <div className="doctor-details admin-doctor-details">
+                    <div className="detail-row admin-detail-row">
                       <span>Experience:</span>
                       <strong>{doctor.experience} years</strong>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row admin-detail-row">
                       <span>Fee:</span>
                       <strong>PKR {doctor.consultationFee?.toLocaleString()}</strong>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row admin-detail-row">
                       <span>Email:</span>
                       <strong>{doctor.email}</strong>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row admin-detail-row">
                       <span>Phone:</span>
                       <strong>{doctor.phone}</strong>
                     </div>
-                    <div className="detail-row">
+                    <div className="detail-row admin-detail-row">
                       <span>Rating:</span>
                       <strong>⭐ {doctor.rating}/5</strong>
                     </div>
                   </div>
 
-                  <div className="doctor-actions">
+                  <div className="doctor-actions admin-doctor-actions">
                     <button onClick={() => handleEditDoctor(doctor)} className="btn-edit">
                       ✏️ Edit
                     </button>

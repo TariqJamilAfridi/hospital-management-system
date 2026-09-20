@@ -175,17 +175,6 @@ function Login() {
             </p>
           </div>
 
-          <div className="demo-credentials">
-            <p className="demo-title">Demo Credentials:</p>
-            <div className="demo-info">
-              <div>
-                <strong>Admin:</strong> admin@careplus.com / admin123
-              </div>
-              <div>
-                <strong>User:</strong> user@example.com / user123
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </main>

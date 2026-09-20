@@ -4,10 +4,10 @@ const { AppError } = require('./errorHandler');
  * Validates appointment data
  */
 const validateAppointmentData = (req, res, next) => {
-  const { fullName, email, phone, date, time } = req.body;
+  const { fullName, email, phone, date, time, doctorId } = req.body;
 
   // Check required fields
-  if (!fullName || !email || !phone || !date || !time) {
+  if (!fullName || !email || !phone || !date || !time || !doctorId) {
     return next(new AppError('All fields are required', 400));
   }
 
@@ -45,24 +45,6 @@ const validateAppointmentData = (req, res, next) => {
   
   if (selectedDate < today) {
     return next(new AppError('Appointment date cannot be in the past', 400));
-  }
-
-  // Validate day (Monday only)
-  if (selectedDate.getDay() !== 1) {
-    return next(new AppError('Appointments are only available on Mondays', 400));
-  }
-
-  // Validate time
-  const allowedTimes = [
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '12:00 PM',
-    '01:00 PM',
-  ];
-
-  if (!allowedTimes.includes(time)) {
-    return next(new AppError('Please select a valid appointment time', 400));
   }
 
   next();

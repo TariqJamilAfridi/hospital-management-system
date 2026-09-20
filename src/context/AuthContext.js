@@ -170,7 +170,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setLoading(false);
-      return { success: true, message: data.message, resetToken: data.resetToken };
+      return { success: true, message: data.message };
     } catch (error) {
       setError(error.message);
       setLoading(false);

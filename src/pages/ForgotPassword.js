@@ -9,7 +9,6 @@ function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [resetToken, setResetToken] = useState("");
 
   const handleChange = (e) => {
     setEmail(e.target.value);
@@ -37,13 +36,8 @@ function ForgotPassword() {
     }
 
     try {
-      const result = await forgotPassword(email);
+      await forgotPassword(email);
       setSuccess(true);
-      
-      // Store reset token for development (remove in production)
-      if (result.resetToken) {
-        setResetToken(result.resetToken);
-      }
     } catch (err) {
       setError(err.message || "Failed to send reset email. Please try again.");
     }
@@ -82,31 +76,6 @@ function ForgotPassword() {
               </div>
             </div>
 
-            {/* Development only - show reset token */}
-            {resetToken && (
-              <div className="alert alert-info">
-                <span className="alert-icon">🔧</span>
-                <div>
-                  <p><strong>Development Mode:</strong></p>
-                  <p style={{ fontSize: "13px", marginTop: "4px" }}>
-                    Use this link to reset password:
-                  </p>
-                  <Link 
-                    to={`/reset-password/${resetToken}`}
-                    className="reset-link"
-                    style={{ 
-                      display: "block", 
-                      marginTop: "8px", 
-                      color: "#1d4ed8",
-                      wordBreak: "break-all"
-                    }}
-                  >
-                    Reset Password Link
-                  </Link>
-                </div>
-              </div>
-            )}
-
             <div className="auth-actions">
               <p className="resend-text">
                 Didn't receive the email?{" "}
@@ -114,7 +83,6 @@ function ForgotPassword() {
                   type="button"
                   onClick={() => {
                     setSuccess(false);
-                    setResetToken("");
                   }}
                   className="text-link"
                 >

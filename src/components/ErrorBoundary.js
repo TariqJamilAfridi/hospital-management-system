@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 /**
  * Error Boundary Component to catch and handle React errors gracefully

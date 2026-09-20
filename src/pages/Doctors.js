@@ -1,16 +1,30 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getDoctors } from "../services/api";
+import { getDoctorAvatarData } from "../utils/helpers";
 
 function Doctors() {
-  const doctors = [
-    {
-      name: "Dr. Nasreen Kasor",
-      specialty: "Gynecology Specialist",
-      availability: "Every Monday, 9:00 AM - 2:00 PM",
-      fee: 2000,
-      image:
-        "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80",
-    },
-  ];
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const data = await getDoctors();
+        console.log("📋 Fetched doctors:", data);
+        setDoctors(data.doctors || []);
+      } catch (error) {
+        console.error("❌ Error fetching doctors:", error);
+        setError("Unable to load doctors. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   return (
     <main className="doctors-page">
@@ -28,53 +42,82 @@ function Doctors() {
       </section>
 
       <section className="doctors-page-section">
-        <div className="doctors-list">
-          {doctors.map((doctor) => (
-            <div
-              className="doctor-management-card"
-              key={doctor.name}
-            >
-              <img
-                src={doctor.image}
-                alt={doctor.name}
-              />
+        {loading && (
+          <div className="loading-message">
+            <p>Loading doctors...</p>
+          </div>
+        )}
 
-              <div className="doctor-management-info">
-                <h2>{doctor.name}</h2>
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
 
-                <p className="doctor-specialty">
-                  {doctor.specialty}
-                </p>
+        {!loading && !error && doctors.length === 0 && (
+          <div className="no-doctors-message">
+            <p>No doctors available at the moment.</p>
+          </div>
+        )}
 
-                <p>
-                  <strong>Availability:</strong>{" "}
-                  {doctor.availability}
-                </p>
+        {!loading && !error && doctors.length > 0 && (
+          <div className="doctors-list">
+            {doctors.map((doctor) => {
+              const avatar = getDoctorAvatarData(doctor);
 
-                <p>
-                  <strong>Appointment Fee:</strong>{" "}
-                  PKR {doctor.fee.toLocaleString()}
-                </p>
+              return (
+                <div
+                  className="doctor-management-card"
+                  key={doctor._id}
+                >
+                  <div className={`doctor-avatar doctor-avatar-${avatar.gender}`} aria-label={`${doctor.name} avatar`}>
+                    <span>{avatar.initials}</span>
+                  </div>
 
-                <div className="doctor-management-actions">
-                  <Link
-                    to="/doctors/nasreen-kasor"
-                    className="view-doctor-btn"
-                  >
-                    View Profile
-                  </Link>
+                  <div className="doctor-management-info">
+                    <h2>{doctor.name}</h2>
 
-                  <Link
-                    to="/appointment"
-                    className="book-doctor-btn"
-                  >
-                    Book Appointment
-                  </Link>
+                    <p className="doctor-specialty">
+                      {doctor.specialty}
+                    </p>
+
+                    <p>
+                      <strong>Availability:</strong>{" "}
+                      {doctor.availableDays} - {doctor.availableTime}
+                    </p>
+
+                    <p>
+                      <strong>Appointment Fee:</strong>{" "}
+                      PKR {(doctor.fee || 0).toLocaleString()}
+                    </p>
+
+                    {doctor.experience && (
+                      <p>
+                        <strong>Experience:</strong> {doctor.experience} years
+                      </p>
+                    )}
+
+                    <div className="doctor-management-actions">
+                      <Link
+                        to={`/doctors/${doctor._id}`}
+                        className="view-doctor-btn"
+                      >
+                        View Profile
+                      </Link>
+
+                      <Link
+                        to="/appointment"
+                        className="book-doctor-btn"
+                      >
+                        Book Appointment
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </main>
   );

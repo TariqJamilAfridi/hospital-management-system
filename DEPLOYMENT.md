@@ -37,6 +37,17 @@ This guide covers deploying the CarePlus Hospital Management System to productio
 4. **Set environment variables** in Vercel dashboard:
    - `REACT_APP_API_URL` - Your backend API URL
 
+  Set this to the deployed backend API root, for example:
+  `https://your-backend.example.com/api`
+
+  Frontend variables are embedded into the browser bundle. Never put MongoDB,
+  JWT, Safepay, or other private credentials in `REACT_APP_*` variables.
+
+5. **Configure the backend CORS origin**
+
+  Set the backend `FRONTEND_URL` to the exact deployed frontend URL, then
+  redeploy or restart the backend.
+
 #### Backend Deployment (Render)
 
 1. **Create a `render.yaml`** in the backend directory:

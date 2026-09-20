@@ -308,10 +308,10 @@ export const getMyAppointments = async () => {
 /**
  * Gets booked time slots for a specific date and doctor
  * @param {string} date - Appointment date
- * @param {string} doctor - Doctor name
+ * @param {string} doctorId - Doctor ID
  * @returns {Promise<Array>} - List of booked time slots
  */
-export const getBookedSlots = async (date, doctor) => {
-  const queryParams = new URLSearchParams({ date, doctor });
+export const getBookedSlots = async (date, doctorId) => {
+  const queryParams = new URLSearchParams({ date, doctorId });
   return apiRequest(`/appointments/booked-slots?${queryParams}`);
 };

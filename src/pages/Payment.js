@@ -224,18 +224,6 @@ function Payment() {
             </div>
           )}
 
-          {/* Debug Info (Development Only) */}
-          {process.env.NODE_ENV === 'development' && (
-            <details className="debug-info">
-              <summary>Debug Information</summary>
-              <pre>{JSON.stringify({
-                hasAppointmentId: !!appointment?.appointmentId,
-                appointmentId: appointment?.appointmentId,
-                amount: appointment?.fee || 2000,
-              }, null, 2)}</pre>
-            </details>
-          )}
-
           {/* Pay Button */}
           <button
             type="button"
