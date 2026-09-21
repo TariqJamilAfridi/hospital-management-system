@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { updatePaymentStatus } from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 
