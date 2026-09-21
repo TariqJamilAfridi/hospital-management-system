@@ -32,11 +32,7 @@ function Appointment() {
                 const data = await getDoctors();
                 console.log("📋 Fetched doctors for appointment:", data);
                 setDoctors(data.doctors || []);
-                
-                // Auto-select first doctor
-                if (data.doctors && data.doctors.length > 0) {
-                    setSelectedDoctor(data.doctors[0]);
-                }
+                setSelectedDoctor(null);
             } catch (error) {
                 console.error("❌ Error fetching doctors:", error);
                 setError("Unable to load doctors. Please try again later.");
@@ -56,9 +52,11 @@ function Appointment() {
     };
 
     const handleDoctorChange = (event) => {
-        const doctor = doctors.find(d => d._id === event.target.value);
-        setSelectedDoctor(doctor);
-        // Reset date and time when doctor changes
+        const selectedValue = event.target.value;
+        const doctor = doctors.find(d => d._id === selectedValue);
+        setSelectedDoctor(doctor || null);
+
+        // Reset date and time when doctor selection changes or clears
         setFormData({
             ...formData,
             date: "",

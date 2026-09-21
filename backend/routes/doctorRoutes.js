@@ -84,6 +84,7 @@ router.post("/", protect, authorize("admin"), async (req, res) => {
       experience,
       email,
       phone,
+      gender,
       consultationFee,
       profileImage,
       availability,
@@ -101,6 +102,12 @@ router.post("/", protect, authorize("admin"), async (req, res) => {
     }
 
     // Create doctor
+    const normalizedAvailability = Array.isArray(availability)
+      ? availability
+      : (typeof availability === "string" && availability.trim())
+        ? availability.split(",").map((day) => day.trim()).filter(Boolean)
+        : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
     const doctor = await Doctor.create({
       name,
       specialty,
@@ -108,9 +115,10 @@ router.post("/", protect, authorize("admin"), async (req, res) => {
       experience,
       email: email.toLowerCase(),
       phone,
+      gender: gender || "Other",
       consultationFee: consultationFee || 2000,
       profileImage,
-      availability: availability || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      availability: normalizedAvailability,
       availableTimeSlots: availableTimeSlots || [
         "09:00 AM",
         "10:00 AM",
@@ -161,6 +169,7 @@ router.put("/:id", protect, authorize("admin"), async (req, res) => {
       experience,
       email,
       phone,
+      gender,
       consultationFee,
       profileImage,
       availability,
@@ -196,9 +205,14 @@ router.put("/:id", protect, authorize("admin"), async (req, res) => {
     if (experience !== undefined) doctor.experience = experience;
     if (email) doctor.email = email.toLowerCase();
     if (phone) doctor.phone = phone;
+    if (gender) doctor.gender = gender;
     if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (profileImage !== undefined) doctor.profileImage = profileImage;
-    if (availability) doctor.availability = availability;
+    if (availability) {
+      doctor.availability = Array.isArray(availability)
+        ? availability
+        : availability.split(",").map((day) => day.trim()).filter(Boolean);
+    }
     if (availableTimeSlots) doctor.availableTimeSlots = availableTimeSlots;
     if (about !== undefined) doctor.about = about;
     if (isActive !== undefined) doctor.isActive = isActive;

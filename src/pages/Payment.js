@@ -134,11 +134,7 @@ function Payment() {
           <h2>Appointment Summary</h2>
 
           <div className="summary-doctor">
-            <img
-              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=150&q=80"
-              alt={appointment.doctor || "Dr. Nasreen Kasor"}
-            />
-            <div>
+            <div className="summary-doctor-text">
               <h3>{appointment.doctor || "Dr. Nasreen Kasor"}</h3>
               <p>{appointment.specialty || "Gynecology Specialist"}</p>
             </div>

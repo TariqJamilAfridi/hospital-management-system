@@ -186,20 +186,23 @@ export const getDoctorAvatarData = (doctor = {}) => {
     'shah', 'talha', 'kamran', 'nabeel', 'faizan', 'john', 'smith'
   ];
 
-  const initials =
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join('') || 'DR';
-
   let gender = 'neutral';
+  let initials = '👩‍⚕️';
 
   if (genderValue.includes('female') || femaleNameHints.some((hint) => normalizedName.includes(hint))) {
     gender = 'female';
+    initials = '♀';
   } else if (genderValue.includes('male') || maleNameHints.some((hint) => normalizedName.includes(hint))) {
     gender = 'male';
+    initials = '♂';
+  } else {
+    initials =
+      name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('') || 'DR';
   }
 
   return { initials, gender };

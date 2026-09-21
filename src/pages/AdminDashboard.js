@@ -21,6 +21,8 @@ function AdminDashboard() {
     experience: "",
     email: "",
     phone: "",
+    gender: "Male",
+    availability: "",
     consultationFee: "2000",
     about: "",
   });
@@ -83,6 +85,8 @@ function AdminDashboard() {
     else if (!/^[0-9]{11}$/.test(doctorFormData.phone)) {
       errors.phone = "Phone must be 11 digits";
     }
+    if (!doctorFormData.gender) errors.gender = "Gender is required";
+    if (!doctorFormData.availability.trim()) errors.availability = "Available days are required";
     if (!doctorFormData.consultationFee) errors.consultationFee = "Fee is required";
 
     setFormErrors(errors);
@@ -98,6 +102,8 @@ function AdminDashboard() {
       experience: "",
       email: "",
       phone: "",
+      gender: "Male",
+      availability: "",
       consultationFee: "2000",
       about: "",
     });
@@ -114,6 +120,8 @@ function AdminDashboard() {
       experience: doctor.experience.toString(),
       email: doctor.email,
       phone: doctor.phone,
+      gender: doctor.gender || "Male",
+      availability: Array.isArray(doctor.availability) ? doctor.availability.join(", ") : (doctor.availableDays || ""),
       consultationFee: doctor.consultationFee.toString(),
       about: doctor.about || "",
     });
@@ -130,6 +138,10 @@ function AdminDashboard() {
       const doctorData = {
         ...doctorFormData,
         experience: parseInt(doctorFormData.experience),
+        availability: doctorFormData.availability
+          .split(",")
+          .map((day) => day.trim())
+          .filter(Boolean),
         consultationFee: parseInt(doctorFormData.consultationFee),
       };
 
@@ -189,6 +201,8 @@ function AdminDashboard() {
       experience: "",
       email: "",
       phone: "",
+      gender: "Male",
+      availability: "",
       consultationFee: "2000",
       about: "",
     });
@@ -525,6 +539,36 @@ function AdminDashboard() {
                       </div>
                     </div>
 
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Gender *</label>
+                        <select
+                          name="gender"
+                          value={doctorFormData.gender}
+                          onChange={handleDoctorFormChange}
+                          className={formErrors.gender ? "error" : ""}
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        {formErrors.gender && <span className="error-message">{formErrors.gender}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Available Days *</label>
+                        <input
+                          type="text"
+                          name="availability"
+                          value={doctorFormData.availability}
+                          onChange={handleDoctorFormChange}
+                          placeholder="Monday, Wednesday, Friday"
+                          className={formErrors.availability ? "error" : ""}
+                        />
+                        {formErrors.availability && <span className="error-message">{formErrors.availability}</span>}
+                      </div>
+                    </div>
+
                     <div className="form-group">
                       <label>About</label>
                       <textarea
@@ -585,6 +629,14 @@ function AdminDashboard() {
                     <div className="detail-row admin-detail-row">
                       <span>Phone:</span>
                       <strong>{doctor.phone}</strong>
+                    </div>
+                    <div className="detail-row admin-detail-row">
+                      <span>Gender:</span>
+                      <strong>{doctor.gender || "Other"}</strong>
+                    </div>
+                    <div className="detail-row admin-detail-row">
+                      <span>Available Days:</span>
+                      <strong>{Array.isArray(doctor.availability) ? doctor.availability.join(", ") : (doctor.availableDays || "Not specified")}</strong>
                     </div>
                     <div className="detail-row admin-detail-row">
                       <span>Rating:</span>

@@ -38,6 +38,12 @@ const doctorSchema = new mongoose.Schema(
       required: [true, "Phone number is required"],
       match: [/^[0-9]{11}$/, "Please provide a valid 11-digit phone number"],
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      default: "Other",
+      trim: true,
+    },
     consultationFee: {
       type: Number,
       required: [true, "Consultation fee is required"],

@@ -106,115 +106,117 @@ function Home() {
             </section>
 
 
-            {/* Doctors Section */}
-            <section className="doctors-section" id="doctors">
-                <div className="section-heading">
-                    <h2>Our Doctors</h2>
+            <div className="hospital-story-section">
+                {/* Doctors Section */}
+                <section className="doctors-section" id="doctors">
+                    <div className="section-heading">
+                        <h2>Our Doctors</h2>
 
-                    <p>
-                        Meet our experienced healthcare professionals.
-                    </p>
-                </div>
-
-                {loadingDoctors && (
-                    <div className="loading-message">
-                        <p>Loading doctors...</p>
+                        <p>
+                            Meet our experienced healthcare professionals.
+                        </p>
                     </div>
-                )}
 
-                {!loadingDoctors && doctors.length === 0 && (
-                    <div className="no-doctors-message">
-                        <p>No doctors available at the moment.</p>
-                    </div>
-                )}
+                    {loadingDoctors && (
+                        <div className="loading-message">
+                            <p>Loading doctors...</p>
+                        </div>
+                    )}
 
-                {!loadingDoctors && featuredDoctors.length > 0 && (
-                    <div className="featured-doctors-grid">
-                        {featuredDoctors.map((doctor) => {
-                            const avatar = getDoctorAvatarData(doctor);
+                    {!loadingDoctors && doctors.length === 0 && (
+                        <div className="no-doctors-message">
+                            <p>No doctors available at the moment.</p>
+                        </div>
+                    )}
 
-                            return (
-                                <div className="featured-doctor-card" key={doctor._id || doctor.name}>
-                                    <div className={`doctor-avatar doctor-avatar-${avatar.gender}`} aria-label={`${doctor.name} avatar`}>
-                                        <span>{avatar.initials}</span>
-                                    </div>
+                    {!loadingDoctors && featuredDoctors.length > 0 && (
+                        <div className="featured-doctors-grid">
+                            {featuredDoctors.map((doctor) => {
+                                const avatar = getDoctorAvatarData(doctor);
 
-                                    <div className="doctor-info">
-                                        <h3>{doctor.name}</h3>
+                                return (
+                                    <div className="featured-doctor-card" key={doctor._id || doctor.name}>
+                                        <div className={`doctor-avatar doctor-avatar-${avatar.gender}`} aria-label={`${doctor.name} avatar`}>
+                                            <span>{avatar.initials}</span>
+                                        </div>
 
-                                        <p className="doctor-specialty">
-                                            {doctor.specialty}
-                                        </p>
+                                        <div className="doctor-info">
+                                            <h3>{doctor.name}</h3>
 
-                                        <p className="doctor-availability">
-                                            <strong>Available:</strong> {doctor.availableDays || 'Not specified'}
-                                        </p>
-
-                                        {doctor.experience && (
-                                            <p className="doctor-experience">
-                                                <strong>Experience:</strong> {doctor.experience} years
+                                            <p className="doctor-specialty">
+                                                {doctor.specialty}
                                             </p>
-                                        )}
 
-                                        {doctor.fee && (
-                                            <p className="doctor-fee">
-                                                <strong>Fee:</strong> PKR {doctor.fee.toLocaleString()}
+                                            <p className="doctor-availability">
+                                                <strong>Available:</strong> {doctor.availableDays || 'Not specified'}
                                             </p>
-                                        )}
 
-                                        <div className="doctor-buttons">
-                                            <Link to={`/doctors/${doctor._id}`} className="secondary-btn">
-                                                View Profile
-                                            </Link>
+                                            {doctor.experience && (
+                                                <p className="doctor-experience">
+                                                    <strong>Experience:</strong> {doctor.experience} years
+                                                </p>
+                                            )}
 
-                                            <Link
-                                                to="/appointment"
-                                                className="primary-btn"
-                                            >
-                                                Book Appointment
-                                            </Link>
+                                            {doctor.fee && (
+                                                <p className="doctor-fee">
+                                                    <strong>Fee:</strong> PKR {doctor.fee.toLocaleString()}
+                                                </p>
+                                            )}
+
+                                            <div className="doctor-buttons">
+                                                <Link to={`/doctors/${doctor._id}`} className="secondary-btn">
+                                                    View Profile
+                                                </Link>
+
+                                                <Link
+                                                    to="/appointment"
+                                                    className="primary-btn"
+                                                >
+                                                    Book Appointment
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
 
-                        <div className="doctors-section-action">
-                            <Link
-                                to="/doctors"
-                                className="view-all-doctors-btn"
-                            >
-                                View All Doctors
-                            </Link>
+                            <div className="doctors-section-action">
+                                <Link
+                                    to="/doctors"
+                                    className="view-all-doctors-btn"
+                                >
+                                    View All Doctors
+                                </Link>
+                            </div>
                         </div>
+                    )}
+                </section>
+
+
+                {/* About Section */}
+                <section className="about-section" id="about">
+                    <div className="about-image">
+                        <img
+                            src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80"
+                            alt="CarePlus Hospital"
+                        />
                     </div>
-                )}
-            </section>
 
+                    <div className="about-content">
+                        <h2>About CarePlus Hospital</h2>
 
-            {/* About Section */}
-            <section className="about-section" id="about">
-                <div className="about-image">
-                    <img
-                        src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80"
-                        alt="CarePlus Hospital"
-                    />
-                </div>
+                        <p>
+                            CarePlus Hospital provides quality healthcare services with
+                            experienced doctors and modern facilities.
+                        </p>
 
-                <div className="about-content">
-                    <h2>About CarePlus Hospital</h2>
-
-                    <p>
-                        CarePlus Hospital provides quality healthcare services with
-                        experienced doctors and modern facilities.
-                    </p>
-
-                    <p>
-                        Our goal is to make healthcare simple, trusted, and accessible
-                        for everyone.
-                    </p>
-                </div>
-            </section>
+                        <p>
+                            Our goal is to make healthcare simple, trusted, and accessible
+                            for everyone.
+                        </p>
+                    </div>
+                </section>
+            </div>
 
 
             {/* Contact Section */}
@@ -233,24 +235,33 @@ function Home() {
                     <div className="contact-info">
 
                         <div className="contact-item">
-                            <h3>Hospital Address</h3>
-                            <p>
-                                {CONTACT_INFO.address}
-                            </p>
+                            <div className="contact-icon" aria-hidden="true">📍</div>
+                            <div className="contact-text">
+                                <h3>Hospital Address</h3>
+                                <p>
+                                    {CONTACT_INFO.address}
+                                </p>
+                            </div>
                         </div>
 
                         <div className="contact-item">
-                            <h3>Phone</h3>
-                            <p>
-                                {CONTACT_INFO.phone}
-                            </p>
+                            <div className="contact-icon" aria-hidden="true">📞</div>
+                            <div className="contact-text">
+                                <h3>Phone</h3>
+                                <p>
+                                    {CONTACT_INFO.phone}
+                                </p>
+                            </div>
                         </div>
 
                         <div className="contact-item">
-                            <h3>Email</h3>
-                            <p>
-                                {CONTACT_INFO.email}
-                            </p>
+                            <div className="contact-icon" aria-hidden="true">✉️</div>
+                            <div className="contact-text">
+                                <h3>Email</h3>
+                                <p>
+                                    {CONTACT_INFO.email}
+                                </p>
+                            </div>
                         </div>
 
                     </div>
