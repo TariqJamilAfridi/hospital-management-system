@@ -12,7 +12,14 @@ router.get("/", async (req, res) => {
     const { specialty, search } = req.query;
 
     // Build query
-    let query = { isActive: true };
+    // Keep backward compatibility for older doctor records that do not yet have
+    // the isActive field populated.
+    let query = {
+      $or: [
+        { isActive: true },
+        { isActive: { $exists: false } },
+      ],
+    };
 
     if (specialty) {
       query.specialty = specialty;

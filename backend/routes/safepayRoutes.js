@@ -3,32 +3,41 @@ const { Safepay } = require("@sfpy/node-sdk");
 const Appointment = require("../models/Appointment");
 
 const router = express.Router();
+const frontendUrl = (
+  process.env.FRONTEND_URL || "http://localhost:3000"
+).replace(/\/$/, "");
+const safepayApiKey =
+  process.env.SAFE_PAY_API_KEY || process.env.SAFEPAY_API_KEY;
+const safepaySecretKey =
+  process.env.SAFE_PAY_SECRET_KEY || process.env.SAFEPAY_SECRET_KEY;
+const safepayWebhookSecret =
+  process.env.SAFE_PAY_WEBHOOK_SECRET || process.env.SAFEPAY_WEBHOOK_SECRET;
 
 console.log(
   "API key loaded:",
-  Boolean(process.env.SAFE_PAY_API_KEY)
+  Boolean(safepayApiKey)
 );
 
 console.log(
   "Secret key loaded:",
-  Boolean(process.env.SAFE_PAY_SECRET_KEY)
+  Boolean(safepaySecretKey)
 );
 
 console.log(
   "Webhook secret loaded:",
-  Boolean(process.env.SAFE_PAY_WEBHOOK_SECRET)
+  Boolean(safepayWebhookSecret)
 );
 
 console.log(
   "Webhook secret length:",
-  process.env.SAFE_PAY_WEBHOOK_SECRET?.length
+  safepayWebhookSecret?.length
 );
 
 const safepay = new Safepay({
   environment: "sandbox",
-  apiKey: process.env.SAFE_PAY_API_KEY,
-  v1Secret: process.env.SAFE_PAY_SECRET_KEY,
-  webhookSecret: process.env.SAFE_PAY_WEBHOOK_SECRET,
+  apiKey: safepayApiKey,
+  v1Secret: safepaySecretKey,
+  webhookSecret: safepayWebhookSecret,
 });
 
 
@@ -98,9 +107,9 @@ router.post(
           orderId:
             appointmentId,
           cancelUrl:
-            "http://localhost:3000/payment",
+            `${frontendUrl}/payment`,
           redirectUrl:
-            "http://localhost:3000/appointment-success",
+            `${frontendUrl}/appointment-success`,
           source: "custom",
           webhooks: true,
         });
